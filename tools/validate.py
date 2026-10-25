@@ -493,10 +493,40 @@ def check_uids(root: Path, rep: Report) -> None:
         src = re.search(r'^source_file="(res://[^"]+)"', t, re.M)
         if src and not res_to_path(root, src.group(1)).exists():
             rep.warn(where, f"исходника {src.group(1)} нет — удалить .import вместе с файлом")
-    for f in iter_files(root, ".tscn") + iter_files(root, ".tres"):
+    res_files = iter_files(root, ".tscn") + iter_files(root, ".tres")
+    for f in res_files:  # uid сцены/ресурса — в шапке файла (2026-10-25: без этого ссылки на сцены давали ложное «нет UID»)
+        m = re.match(r'\[gd_\w+ [^\]\n]*uid="(uid://[0-9a-z]+)"', f.read_text(encoding="utf-8"))
+        if m:
+            add(m.group(1), rel(root, f))
+    for f in res_files:
         for m in re.finditer(r'^\[ext_resource [^\n]*?uid="(uid://[0-9a-z]+)"', f.read_text(encoding="utf-8"), re.M):
             if m.group(1) not in seen:
                 rep.warn(rel(root, f), f"ext_resource {m.group(1)}: такого UID нет в *.uid / *.import — Godot возьмёт path=")
+
+def check_editor_format(root: Path, rep: Report) -> None:
+    """S-08 (2026-10-25): сцены и скрипты лежат в формате редактора 4.7, иначе первое же «Сохранить» у пользователя
+    перепишет файл и в GitHub пойдёт шум. Предупреждения, не ошибки: Godot такие файлы открывает.
+    Чинится генератором tools/agent/tscn.py (uid, unique_id) и tools/agent/uids.py --fix (*.uid)."""
+    for ext in (".gd", ".gdshader", ".gdshaderinc"):
+        for f in iter_files(root, ext):
+            if not Path(str(f) + ".uid").exists():
+                rep.warn(rel(root, f), "нет .uid — редактор создаст его сам (новый файл у пользователя): tools/agent/uids.py --fix")
+    for f in iter_files(root, ".tscn"):
+        lines = f.read_text(encoding="utf-8").splitlines()
+        r = rel(root, f)
+        if lines and not re.match(r'\[gd_scene [^\]]*uid="uid://[0-9a-z]+"', lines[0]):
+            rep.warn(f"{r}:1", "формат редактора: в шапке нет uid — редактор допишет при сохранении")
+        bare = [i for i, ln in enumerate(lines, 1) if ln.startswith("[node ") and " unique_id=" not in ln]
+        if bare:
+            rep.warn(f"{r}:{bare[0]}", f"формат редактора: узлов без unique_id {len(bare)} — редактор 4.7 назначит их сам")
+        for i, ln in enumerate(lines, 1):
+            m = re.match(r'\[ext_resource [^\]]*path="(res://[^"]+)"', ln)
+            if m and " uid=" not in ln:
+                t = res_to_path(root, m.group(1))
+                for side in (Path(str(t) + ".uid"), Path(str(t) + ".import")):
+                    if side.exists():
+                        rep.warn(f"{r}:{i}", f"формат редактора: ext_resource {m.group(1)} без uid, а у файла он есть ({side.name})")
+                        break
 
 # ---------------------------------------------------------------- размер сборки
 def check_build(build: Path, rep: Report) -> None:
@@ -525,6 +555,7 @@ def validate(root: Path, release: bool = False, build: Path | None = None) -> Re
     check_strings(root, rep, release)
     check_shaders(root, rep)
     check_uids(root, rep)
+    check_editor_format(root, rep)
     if build:
         check_build(build, rep)
     return rep
@@ -545,7 +576,7 @@ def selftest() -> int:
         "scenes/dup_b.gd.uid": ("uid://dupdupdup0\n", "исходника нет"),
         "shaders/bad.gdshader": ("// Источник: https://www.shadertoy.com/view/xxx\n// Автор: кто-то\n// Лицензия: CC BY-NC-SA 3.0\nshader_type spatial;\n", "лицензия"),
     }
-    expect_extra = ["не найден выше", "«Engine»", "не ключ", "слой 1 / маска 1", "CREDITS", "func f() без типа", "параметр «a»"]
+    expect_extra = ["нет .uid", "в шапке нет uid", "без unique_id", "не найден выше", "«Engine»", "не ключ", "слой 1 / маска 1", "CREDITS", "func f() без типа", "параметр «a»"]
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
         for item in ("project.godot", "localization", "autoload", "scenes", "assets", "icon.svg", "CREDITS.md"):

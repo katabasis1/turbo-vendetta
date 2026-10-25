@@ -7,7 +7,7 @@ import random
 import sys
 
 sys.path.insert(0, "tools/agent")
-from tscn import (Scene, IDENT, color, matmul, mm_row, num, rot_x, rot_y, rot_z, scale, shader_mat, v3, xform)
+from tscn import (Scene, IDENT, color, fnum, matmul, mm_row, num, rot_x, rot_y, rot_z, scale, shader_mat, v3, xform)
 
 SP = "res://scenes/dev/spikes"
 SH = "res://shaders"
@@ -217,13 +217,11 @@ def gen_render():
         car_paths.append(f'NodePath("Cars/Car{i + 1}")')
     s.node("Hud", None, ".", instance=hud)
     # свойства корня — после того как известны пути
-    root = s.nodes[0]
     decor = ", ".join(f'NodePath("World/{n}")' for n in names)
-    root += "\n" + "\n".join([
-        f"script = {script}", 'hud = NodePath("Hud")', 'camera_rig = NodePath("CameraRig")',
-        'world_environment = NodePath("WorldEnvironment")', f"sky_material = {m_sky}", f"window_material = {m_windows}",
-        f"cars = [{', '.join(car_paths)}]", f"decor = [{decor}]"])
-    s.nodes[0] = root
+    s.add_props("SpikeRender", [
+        ("script", script), ("hud", 'NodePath("Hud")'), ("camera_rig", 'NodePath("CameraRig")'),
+        ("world_environment", 'NodePath("WorldEnvironment")'), ("sky_material", m_sky), ("window_material", m_windows),
+        ("cars", f"[{', '.join(car_paths)}]"), ("decor", f"[{decor}]")])
     s.write("scenes/dev/spikes/spike_render.tscn")
 
 
@@ -341,7 +339,7 @@ def gen_vfx():
             paths["trails"].append(f'NodePath("{sp}/{side}")')
         s.node("Marks", "CPUParticles3D", sp, props=[
             ("transform", xform(rot_y(-d), (0, 0.02, 1.4))),
-            ("amount", str(int(MARK_RATE * MARK_LIFE))), ("lifetime", num(MARK_LIFE)), *common, ("mesh", q_mark),
+            ("amount", str(int(MARK_RATE * MARK_LIFE))), ("lifetime", fnum(MARK_LIFE)), *common, ("mesh", q_mark),
             ("gravity", v3(0, 0, 0)), ("initial_velocity_min", "0.0"), ("initial_velocity_max", "0.0"),
             ("color_ramp", g_mark)])
         paths["smoke"].append(f'NodePath("{sp}/Smoke")')
@@ -353,12 +351,11 @@ def gen_vfx():
     s.node("SpeedBlur", "ColorRect", "Overlay", props=[("visible", "false"), ("material", m_blur), *full])
     s.node("SpeedLines", "ColorRect", "Overlay", props=[("visible", "false"), ("material", m_lines), *full])
     s.node("Hud", None, ".", instance=hud)
-    root = s.nodes[0] + "\n" + "\n".join([
-        f"script = {script}", 'hud = NodePath("Hud")', 'car_rig = NodePath("CarRig")',
-        'side_camera = NodePath("SideCamera")', 'chase_camera = NodePath("CarRig/ChaseCamera")',
-        *(f"{k} = [{', '.join(v)}]" for k, v in paths.items()),
-        'speed_lines = NodePath("Overlay/SpeedLines")', 'speed_blur = NodePath("Overlay/SpeedBlur")'])
-    s.nodes[0] = root
+    s.add_props("SpikeVfx", [
+        ("script", script), ("hud", 'NodePath("Hud")'), ("car_rig", 'NodePath("CarRig")'),
+        ("side_camera", 'NodePath("SideCamera")'), ("chase_camera", 'NodePath("CarRig/ChaseCamera")'),
+        *((k, f"[{', '.join(v)}]") for k, v in paths.items()),
+        ("speed_lines", 'NodePath("Overlay/SpeedLines")'), ("speed_blur", 'NodePath("Overlay/SpeedBlur")')])
     s.write("scenes/dev/spikes/spike_vfx.tscn")
 
 
@@ -393,10 +390,11 @@ def gen_audio():
            ("theme_override_colors/font_color", "Color(0.737, 0.643, 0.82, 1)"), ("theme_override_font_sizes/font_size", "18"),
            ("text", '"…"'), ("autowrap_mode", "3")])
     s.node("Hud", None, ".", instance=hud)
-    s.nodes[0] = s.nodes[0] + "\n" + "\n".join([
-        f"script = {script}", 'hud = NodePath("Hud")', 'engine_low = NodePath("EngineLow")', 'engine_base = NodePath("EngineBase")',
-        'engine_high = NodePath("EngineHigh")', 'rpm_slider = NodePath("Center/Box/RpmSlider")',
-        'rpm_label = NodePath("Center/Box/RpmLabel")', 'info_label = NodePath("Center/Box/Info")'])
+    s.add_props("SpikeAudio", [
+        ("script", script), ("hud", 'NodePath("Hud")'), ("engine_low", 'NodePath("EngineLow")'),
+        ("engine_base", 'NodePath("EngineBase")'), ("engine_high", 'NodePath("EngineHigh")'),
+        ("rpm_slider", 'NodePath("Center/Box/RpmSlider")'), ("rpm_label", 'NodePath("Center/Box/RpmLabel")'),
+        ("info_label", 'NodePath("Center/Box/Info")')])
     s.write("scenes/dev/spikes/spike_audio.tscn")
 
 

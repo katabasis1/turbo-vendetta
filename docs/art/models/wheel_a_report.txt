@@ -1,0 +1,4 @@
+# wheel_a → assets/models/wheels/wheel_a.glb
+треугольники: 300 из 400 (wheel 300)
+материалы: atlas
+габарит: 0.220 × 0.643 × 0.646 м (X × Y × Z)
