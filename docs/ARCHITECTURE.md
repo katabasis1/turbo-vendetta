@@ -93,6 +93,8 @@ res://
 | audio | `buses/default_bus_layout` | `res://assets/audio/bus_layout.tres` | шины ниже |
 | autoload | порядок | `EventBus`, `Settings`, `YandexSDK`, `PauseService` | каждый следующий может опираться на предыдущие |
 
+**Формат файла — как у редактора (S-08, 2026-10-25).** Редактор 4.7.2 при импорте переписал `project.godot`: ни одна наша настройка не потерялась, но значения, **равные умолчаниям движка**, он не хранит — `msaa_3d=0`, `physics_ticks_per_second=60`, `locale/fallback="en"` в файле отсутствуют, и это значит «умолчание» (= значения из таблицы). Чтобы задать другое (2× MSAA, 30 Гц), ключ просто дописывается. Генератор `tools/agent/gen_project_godot.py` пишет файл побайтно как редактор (шапка, `\n, Object(` между событиями ввода, порядок ключей), `checkpoint.sh` сверяет. Файлы `*.uid` (скрипты, шейдеры) и `*.import` создаёт редактор — храним в git, `validate.py` проверяет формат и уникальность UID.
+
 **Аудиошины:** `Master` → `Music`, `Sfx` (→ `Engines`), `Ui`. Пауза (потеря фокуса, реклама) глушит `Master`.
 
 **Глобальные uniform шейдеров** (`[shader_globals]`, их пишет `TrackLightingComponent` из `TrackCondition`): `sun_dir: vec3`, `sun_color: color`, `shadow_tint: color` (`#402A69`), `rim_color: color` (`#F3A0A8`), `horizon_color: color`, `fog_color: color`, `fog_start: float` (60), `fog_end: float` (400). Запасной путь, если global uniforms в Compatibility подведут (S-01): uniform в каждом материале, значения раздаёт тот же компонент.

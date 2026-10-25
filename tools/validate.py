@@ -460,6 +460,44 @@ def check_project(root: Path, rep: Report) -> None:
     if not ms or not res_to_path(root, ms.group(1)).exists():
         rep.err("project.godot", "главная сцена не найдена")
 
+# ---------------------------------------------------------------- UID редактора (*.uid, *.import)
+UID_RE = re.compile(r"^uid://[0-9a-z]+$")
+
+
+def check_uids(root: Path, rep: Report) -> None:
+    """S-08 (2026-10-25): редактор создаёт *.gd.uid / *.gdshader.uid и *.import с uid=.
+    Их храним в git. Проверяем: формат, исходник на месте, UID не повторяется, uid= в сценах известен."""
+    seen: dict[str, str] = {}
+
+    def add(uid: str, where: str) -> None:
+        if uid in seen:
+            rep.err(where, f"UID {uid} повторяется (уже в {seen[uid]}) — удалить один файл .uid и переоткрыть проект")
+        else:
+            seen[uid] = where
+
+    for f in iter_files(root, ".uid"):
+        where = rel(root, f)
+        uid = f.read_text(encoding="utf-8").strip()
+        if not UID_RE.match(uid):
+            rep.err(where, f"неверный формат UID «{uid[:40]}»")
+            continue
+        if not f.with_suffix("").exists():
+            rep.warn(where, "исходника нет — .uid остался от удалённого файла, удалить вместе с ним")
+        add(uid, where)
+    for f in iter_files(root, ".import"):
+        where = rel(root, f)
+        t = f.read_text(encoding="utf-8")
+        m = re.search(r'^uid="(uid://[0-9a-z]+)"', t, re.M)
+        if m:
+            add(m.group(1), where)
+        src = re.search(r'^source_file="(res://[^"]+)"', t, re.M)
+        if src and not res_to_path(root, src.group(1)).exists():
+            rep.warn(where, f"исходника {src.group(1)} нет — удалить .import вместе с файлом")
+    for f in iter_files(root, ".tscn") + iter_files(root, ".tres"):
+        for m in re.finditer(r'^\[ext_resource [^\n]*?uid="(uid://[0-9a-z]+)"', f.read_text(encoding="utf-8"), re.M):
+            if m.group(1) not in seen:
+                rep.warn(rel(root, f), f"ext_resource {m.group(1)}: такого UID нет в *.uid / *.import — Godot возьмёт path=")
+
 # ---------------------------------------------------------------- размер сборки
 def check_build(build: Path, rep: Report) -> None:
     total = sum(f.stat().st_size for f in build.rglob("*") if f.is_file())
@@ -486,6 +524,7 @@ def validate(root: Path, release: bool = False, build: Path | None = None) -> Re
     check_tscn(root, rep)
     check_strings(root, rep, release)
     check_shaders(root, rep)
+    check_uids(root, rep)
     if build:
         check_build(build, rep)
     return rep
@@ -502,6 +541,8 @@ def selftest() -> int:
         "components/bad_ext.gd": ("class_name BadExtComponent extends BadNewComponent\n", "наследоваться можно только"),
         "components/bad_mesh.gd": ("class_name BadMeshComponent extends Node\nfunc _ready() -> void:\n\tvar st: SurfaceTool = SurfaceTool.new()\n", "SurfaceTool"),
         "scenes/bad.tscn": ('[gd_scene format=3]\n\n[ext_resource type="Script" path="res://nope.gd" id="1"]\n\n[node name="Car" type="RigidBody3D"]\nengine = NodePath("Engine")\n\n[node name="L" type="Label" parent="Missing"]\ntext = "Привет, мир"\n', "ext_resource не найден"),
+        "scenes/dup_a.gd.uid": ("uid://dupdupdup0\n", "повторяется"),
+        "scenes/dup_b.gd.uid": ("uid://dupdupdup0\n", "исходника нет"),
         "shaders/bad.gdshader": ("// Источник: https://www.shadertoy.com/view/xxx\n// Автор: кто-то\n// Лицензия: CC BY-NC-SA 3.0\nshader_type spatial;\n", "лицензия"),
     }
     expect_extra = ["не найден выше", "«Engine»", "не ключ", "слой 1 / маска 1", "CREDITS", "func f() без типа", "параметр «a»"]

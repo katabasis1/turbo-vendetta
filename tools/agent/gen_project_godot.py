@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """Генератор project.godot (агент пишет вручную, Godot у агента нет — S-08).
 Источник чисел: docs/ARCHITECTURE.md §3–§4, цвета — docs/STYLE_GUIDE.md §2 (условие «Закат»).
-usage: python3 tools/agent/gen_project_godot.py > project.godot"""
+usage: python3 tools/agent/gen_project_godot.py > project.godot
+
+Формат = как пишет редактор Godot 4.7.2 (S-08, сверено 2026-10-25 по копии из GitHub после импорта у пользователя):
+стандартная шапка; события ввода разделены "\n, Object("; значения по умолчанию редактор выкидывает —
+locale/fallback="en", common/physics_ticks_per_second=60, anti_aliasing/quality/msaa_3d=0 здесь не пишем
+(они равны умолчаниям движка, ARCHITECTURE §3 — какие значения мы на них рассчитываем); порядок ключей в [physics] — как у редактора.
+Проверка: вывод генератора побайтно равен project.godot в репозитории (tools/agent/checkpoint.sh это сверяет)."""
 
 def col(h, a=1.0):
     h = h.lstrip('#'); r, g, b = (int(h[i:i+2], 16) / 255 for i in (0, 2, 4))
@@ -41,7 +47,7 @@ GLOBALS = [  # имя, тип, значение — ARCHITECTURE §3, STYLE_GUID
 
 out = []
 w = out.append
-w("; Engine configuration file.\n; Написан агентом вручную (tools/agent/gen_project_godot.py), см. docs/ARCHITECTURE.md §3.\n")
+w("; Engine configuration file.\n; It's best edited using the editor UI and not directly,\n; since the parameters that go here are not all obvious.\n;\n; Format:\n;   [section] ; section goes between []\n;   param=value ; assign values to parameters\n")
 w("config_version=5\n")
 w("[application]\n")
 w('config/name="Turbo Vendetta: Knockout Racing"')
@@ -66,25 +72,27 @@ w("window/size/viewport_width=1280\nwindow/size/viewport_height=720")
 w('window/stretch/mode="canvas_items"\nwindow/stretch/aspect="expand"\n')
 w("[input]\n")
 for name, keys in ACTIONS:
-    evs = ",\n".join(key_event(KEY[k], loc) for k, loc in keys)
+    evs = "\n, ".join(key_event(KEY[k], loc) for k, loc in keys)
     w(f'{name}={{\n"deadzone": 0.2,\n"events": [{evs}\n]\n}}')
 w("")
 w("[input_devices]\n")
 w("pointing/emulate_touch_from_mouse=true\n")
 w("[internationalization]\n")
 w('locale/translations=PackedStringArray("res://localization/strings.ru.translation", "res://localization/strings.en.translation")')
-w('locale/fallback="en"\n')
+w("")  # locale/fallback="en" — умолчание, редактор его не пишет
 w("[layer_names]\n")
 for i, n in enumerate(["world", "cars", "triggers", "fall", "projectiles"], 1):
     w(f'3d_physics/layer_{i}="{n}"')
 w("")
 w("[physics]\n")
+# physics_ticks_per_second=60 — умолчание, редактор его не пишет; порядок ключей — как у редактора
+w("common/max_physics_steps_per_frame=4")
 w('3d/physics_engine="Jolt Physics"')
-w("common/physics_ticks_per_second=60\ncommon/max_physics_steps_per_frame=4\ncommon/physics_interpolation=true\n")
+w("common/physics_interpolation=true\n")
 w("[rendering]\n")
 w('renderer/rendering_method="gl_compatibility"\nrenderer/rendering_method.mobile="gl_compatibility"')
 w("textures/vram_compression/import_etc2_astc=true")
-w("anti_aliasing/quality/msaa_3d=0\n")
+w("")  # anti_aliasing/quality/msaa_3d=0 — умолчание, редактор его не пишет
 w("[shader_globals]\n")
 for n, t, v in GLOBALS:
     w(f'{n}={{\n"type": "{t}",\n"value": {v}\n}}')
