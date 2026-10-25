@@ -1,0 +1,74 @@
+[gd_scene format=3 uid="uid://de41vmrs8f7up"]
+
+[ext_resource type="Script" uid="uid://cp4bdilgd1af6" path="res://scenes/dev/spikes/spike_menu.gd" id="1_menu"]
+
+[node name="SpikeMenu" type="Control" unique_id=217364558 node_paths=PackedStringArray("buttons", "info_label")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+buttons = [NodePath("Center/Box/Render"), NodePath("Center/Box/Vfx"), NodePath("Center/Box/Audio"), NodePath("Center/Box/CarModel")]
+scene_paths = PackedStringArray("res://scenes/dev/spikes/spike_render.tscn", "res://scenes/dev/spikes/spike_vfx.tscn", "res://scenes/dev/spikes/spike_audio.tscn", "res://scenes/dev/dev_car_model.tscn")
+info_label = NodePath("Center/Box/Info")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1869234002]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.075, 0.047, 0.153, 1)
+
+[node name="Center" type="CenterContainer" parent="." unique_id=1732086340]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="Center" unique_id=1928694298]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Center/Box" unique_id=376733070]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.957, 0.675, 0.353, 1)
+theme_override_font_sizes/font_size = 36
+text = "Турбовендетта — спайки этапа 1.1"
+horizontal_alignment = 1
+
+[node name="Render" type="Button" parent="Center/Box" unique_id=151265147]
+custom_minimum_size = Vector2(1000, 88)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "1 · Рендер: свет, бюджет кадра, стоп-сигналы, Glow, небо  (S-01, S-02, S-06, S-12, S-14)"
+
+[node name="Vfx" type="Button" parent="Center/Box" unique_id=1138267998]
+custom_minimum_size = Vector2(1000, 88)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "2 · Эффекты: дым, искры, шлейфы, следы, линии скорости  (S-05, S-13, S-15, S-16)"
+
+[node name="Audio" type="Button" parent="Center/Box" unique_id=1941530135]
+custom_minimum_size = Vector2(1000, 88)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "3 · Звук мотора и вибрация  (S-07, S-11)"
+
+[node name="CarModel" type="Button" parent="Center/Box" unique_id=1374620915]
+custom_minimum_size = Vector2(1000, 88)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "4 · Модель машины «Сэнко»: контур, огни, ракурсы  (S-19)"
+
+[node name="Info" type="Label" parent="Center/Box" unique_id=1516013814]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.737, 0.643, 0.82, 1)
+theme_override_font_sizes/font_size = 18
+text = "…"

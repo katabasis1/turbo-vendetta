@@ -1,0 +1,123 @@
+[gd_scene format=3 uid="uid://dfl12d6d2dtki"]
+
+[ext_resource type="Script" uid="uid://d17jvcwh8uw73" path="res://scenes/dev/dev_car_model.gd" id="1_dev"]
+[ext_resource type="PackedScene" uid="uid://drjtcqeta7mbd" path="res://scenes/car/models/car_01_model.tscn" id="2_model"]
+[ext_resource type="Shader" uid="uid://ciep71ruwtcjb" path="res://shaders/cel_lit.gdshader" id="3_cel"]
+[ext_resource type="Shader" uid="uid://dfdefhsgkv0xo" path="res://shaders/sky_sunset.gdshader" id="9_sky"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
+shader = ExtResource("9_sky")
+shader_parameter/coral = Color(0.922, 0.482, 0.576, 1)
+shader_parameter/middle = Color(0.616, 0.267, 0.533, 1)
+shader_parameter/upper = Color(0.275, 0.157, 0.431, 1)
+shader_parameter/zenith = Color(0.141, 0.086, 0.247, 1)
+shader_parameter/below = Color(0.478, 0.29, 0.525, 1)
+shader_parameter/h_coral = 0.05
+shader_parameter/h_middle = 0.16
+shader_parameter/h_upper = 0.36
+shader_parameter/h_zenith = 0.75
+shader_parameter/sun_radius_deg = 3.2
+shader_parameter/halo_radius_deg = 16.0
+shader_parameter/halo_strength = 0.35
+
+[sub_resource type="Sky" id="Sky_sunset"]
+sky_material = SubResource("ShaderMaterial_sky")
+radiance_size = 0
+
+[sub_resource type="Environment" id="Environment_spike"]
+background_mode = 2
+background_color = Color(0.964706, 0.698039, 0.419608, 1)
+sky = SubResource("Sky_sunset")
+ambient_light_source = 1
+reflected_light_source = 1
+glow_intensity = 0.8
+glow_hdr_threshold = 0.9
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ground"]
+render_priority = 0
+shader = ExtResource("3_cel")
+shader_parameter/tone_light = Color(0.415686, 0.247059, 0.486275, 1)
+shader_parameter/tone_mid = Color(0.290196, 0.180392, 0.4, 1)
+shader_parameter/tone_shadow = Color(0.180392, 0.113725, 0.278431, 1)
+shader_parameter/use_vertex_color = false
+shader_parameter/shadow_tint_mix = 0.35
+shader_parameter/th_light = 0.55
+shader_parameter/th_mid = 0.05
+shader_parameter/edge_soft = 0.03
+shader_parameter/rim_strength = 0.0
+shader_parameter/rim_threshold = 0.6
+shader_parameter/spec_strength = 0.0
+shader_parameter/spec_threshold = 0.93
+shader_parameter/fog_amount = 1.0
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+material = SubResource("ShaderMaterial_ground")
+size = Vector2(60, 60)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mark"]
+render_priority = 0
+shader = ExtResource("3_cel")
+shader_parameter/tone_light = Color(0.933333, 0.760784, 0.894118, 1)
+shader_parameter/tone_mid = Color(0.788235, 0.639216, 0.847059, 1)
+shader_parameter/tone_shadow = Color(0.560784, 0.435294, 0.690196, 1)
+shader_parameter/use_vertex_color = false
+shader_parameter/shadow_tint_mix = 0.35
+shader_parameter/th_light = 0.55
+shader_parameter/th_mid = 0.05
+shader_parameter/edge_soft = 0.03
+shader_parameter/rim_strength = 0.0
+shader_parameter/rim_threshold = 0.6
+shader_parameter/spec_strength = 0.0
+shader_parameter/spec_threshold = 0.93
+shader_parameter/fog_amount = 1.0
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_mark"]
+material = SubResource("ShaderMaterial_mark")
+size = Vector2(0.15, 60)
+
+[node name="DevCarModel" type="Node3D" unique_id=763835103 node_paths=PackedStringArray("turntable", "car", "camera", "info_label")]
+script = ExtResource("1_dev")
+turntable = NodePath("Turntable")
+car = NodePath("Turntable/Car")
+camera = NodePath("Camera3D")
+info_label = NodePath("Ui/Info")
+ground_y = -0.235
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1227444837]
+environment = SubResource("Environment_spike")
+
+[node name="Ground" type="MeshInstance3D" parent="." unique_id=41317216]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.235, 0)
+mesh = SubResource("PlaneMesh_ground")
+
+[node name="Mark1" type="MeshInstance3D" parent="." unique_id=1896046559]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.23, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_mark")
+
+[node name="Mark2" type="MeshInstance3D" parent="." unique_id=1561499177]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.23, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_mark")
+
+[node name="Turntable" type="Node3D" parent="." unique_id=1688573027]
+
+[node name="Car" parent="Turntable" unique_id=1960392085 instance=ExtResource("2_model")]
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=885319094]
+transform = Transform3D(1, 0, 0, 0, 0.984623, 0.174691, 0, -0.174691, 0.984623, 0, 1.965, 6.4)
+current = true
+fov = 70.0
+far = 500.0
+
+[node name="Ui" type="CanvasLayer" parent="." unique_id=520406041]
+
+[node name="Info" type="Label" parent="Ui" unique_id=1086637203]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 720.0
+offset_bottom = 160.0
+theme_override_colors/font_color = Color(1, 0.964706, 0.878431, 1)
+theme_override_colors/font_outline_color = Color(0.105882, 0.062745, 0.188235, 1)
+theme_override_constants/outline_size = 6
+text = "…"

@@ -1,0 +1,151 @@
+[gd_scene format=3 uid="uid://drjtcqeta7mbd"]
+
+[ext_resource type="Script" uid="uid://bdt42staxws8a" path="res://scenes/car/car_model.gd" id="1_model"]
+[ext_resource type="PackedScene" uid="uid://blmx00h3j8af0" path="res://assets/models/cars/car_01/car_01.glb" id="2_body"]
+[ext_resource type="PackedScene" uid="uid://7oedylhkrr8w" path="res://assets/models/wheels/wheel_a.glb" id="3_wheel"]
+[ext_resource type="Shader" uid="uid://ciep71ruwtcjb" path="res://shaders/cel_lit.gdshader" id="4_cel"]
+[ext_resource type="Shader" uid="uid://dxvit0awvwjgq" path="res://shaders/cel_emissive.gdshader" id="5_emi"]
+[ext_resource type="Shader" uid="uid://d4hpotm7n54y5" path="res://shaders/cel_outline.gdshader" id="6_ink"]
+[ext_resource type="Shader" uid="uid://ch0pij76y8og3" path="res://shaders/glow_billboard.gdshader" id="7_glow"]
+[ext_resource type="Texture2D" uid="uid://dcqvy1u5vr2yb" path="res://assets/textures/palette_atlas.png" id="8_atlas"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_paint"]
+render_priority = 0
+shader = ExtResource("4_cel")
+shader_parameter/tone_light = Color(1, 1, 1, 1)
+shader_parameter/tone_mid = Color(0.868, 0.749, 0.844, 1)
+shader_parameter/tone_shadow = Color(0.75, 0.489, 0.696, 1)
+shader_parameter/albedo_tex = ExtResource("8_atlas")
+shader_parameter/use_vertex_color = false
+shader_parameter/shadow_tint_mix = 0.35
+shader_parameter/th_light = 0.55
+shader_parameter/th_mid = 0.05
+shader_parameter/edge_soft = 0.03
+shader_parameter/rim_strength = 0.35
+shader_parameter/rim_threshold = 0.6
+shader_parameter/spec_strength = 0.6
+shader_parameter/spec_threshold = 0.93
+shader_parameter/fog_amount = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wheel"]
+render_priority = 0
+shader = ExtResource("4_cel")
+shader_parameter/tone_light = Color(1, 1, 1, 1)
+shader_parameter/tone_mid = Color(0.868, 0.749, 0.844, 1)
+shader_parameter/tone_shadow = Color(0.75, 0.489, 0.696, 1)
+shader_parameter/albedo_tex = ExtResource("8_atlas")
+shader_parameter/use_vertex_color = false
+shader_parameter/shadow_tint_mix = 0.35
+shader_parameter/th_light = 0.55
+shader_parameter/th_mid = 0.05
+shader_parameter/edge_soft = 0.03
+shader_parameter/rim_strength = 0.0
+shader_parameter/rim_threshold = 0.6
+shader_parameter/spec_strength = 0.0
+shader_parameter/spec_threshold = 0.93
+shader_parameter/fog_amount = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_head"]
+render_priority = 0
+shader = ExtResource("5_emi")
+shader_parameter/color_on = Color(1, 1, 1, 1)
+shader_parameter/color_off = Color(0.45, 0.45, 0.5, 1)
+shader_parameter/emission_tex = ExtResource("8_atlas")
+shader_parameter/energy = 1.2
+shader_parameter/fog_amount = 0.6
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_brake"]
+render_priority = 0
+shader = ExtResource("5_emi")
+shader_parameter/color_on = Color(1, 1, 1, 1)
+shader_parameter/color_off = Color(0.42, 0.42, 0.46, 1)
+shader_parameter/emission_tex = ExtResource("8_atlas")
+shader_parameter/energy = 1.4
+shader_parameter/fog_amount = 0.6
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_outline"]
+render_priority = 0
+shader = ExtResource("6_ink")
+shader_parameter/ink_color = Color(0.106, 0.063, 0.188, 1)
+shader_parameter/width_px = 2.5
+shader_parameter/full_width_dist = 12.0
+shader_parameter/min_width_scale = 0.4
+shader_parameter/fog_amount = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_brakeglow"]
+render_priority = 0
+shader = ExtResource("7_glow")
+shader_parameter/glow_color = Color(1, 0.309804, 0.431373, 1)
+shader_parameter/intensity = 0.9
+shader_parameter/core = 0.15
+shader_parameter/fog_amount = 0.5
+
+[sub_resource type="QuadMesh" id="QuadMesh_brakeglow"]
+material = SubResource("ShaderMaterial_brakeglow")
+size = Vector2(2.4, 0.8)
+
+[node name="Car01Model" type="Node3D" unique_id=1941140110 node_paths=PackedStringArray("body_pivot", "wheel_pivots", "tail_lights", "rear_contacts", "nameplate", "brake_lights", "brake_glow", "paint_meshes", "wheel_meshes", "head_lights", "outline_meshes")]
+script = ExtResource("1_model")
+body_pivot = NodePath("BodyPivot")
+wheel_pivots = [NodePath("WheelFL"), NodePath("WheelFR"), NodePath("WheelRL"), NodePath("WheelRR")]
+tail_lights = [NodePath("BodyPivot/TailLightL"), NodePath("BodyPivot/TailLightR")]
+rear_contacts = [NodePath("RearContactL"), NodePath("RearContactR")]
+nameplate = NodePath("BodyPivot/Nameplate")
+brake_lights = [NodePath("BodyPivot/Body/tail")]
+brake_glow = NodePath("BodyPivot/BrakeGlow")
+paint_material = SubResource("ShaderMaterial_paint")
+paint_meshes = [NodePath("BodyPivot/Body/body")]
+wheel_material = SubResource("ShaderMaterial_wheel")
+wheel_meshes = [NodePath("WheelFL/Wheel/wheel"), NodePath("WheelFR/Wheel/wheel"), NodePath("WheelRL/Wheel/wheel"), NodePath("WheelRR/Wheel/wheel")]
+head_material = SubResource("ShaderMaterial_head")
+head_lights = [NodePath("BodyPivot/Body/head")]
+brake_material = SubResource("ShaderMaterial_brake")
+outline_material = SubResource("ShaderMaterial_outline")
+outline_meshes = [NodePath("BodyPivot/Body/body_outline"), NodePath("WheelFL/Wheel/wheel_outline"), NodePath("WheelFR/Wheel/wheel_outline"), NodePath("WheelRL/Wheel/wheel_outline"), NodePath("WheelRR/Wheel/wheel_outline")]
+
+[node name="BodyPivot" type="Node3D" parent="." unique_id=437817286]
+
+[node name="Body" parent="BodyPivot" unique_id=1289540046 instance=ExtResource("2_body")]
+
+[node name="BrakeGlow" type="MeshInstance3D" parent="BodyPivot" unique_id=607389451]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.455, 2.212)
+visible = false
+cast_shadow = 0
+mesh = SubResource("QuadMesh_brakeglow")
+
+[node name="TailLightL" type="Marker3D" parent="BodyPivot" unique_id=1578961144]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.455, 2.092)
+
+[node name="TailLightR" type="Marker3D" parent="BodyPivot" unique_id=1955208154]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.455, 2.092)
+
+[node name="Nameplate" type="Marker3D" parent="BodyPivot" unique_id=555511946]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+
+[node name="WheelFL" type="Node3D" parent="." unique_id=151343038]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.78, 0.09, -1.35)
+
+[node name="Wheel" parent="WheelFL" unique_id=665617122 instance=ExtResource("3_wheel")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="WheelFR" type="Node3D" parent="." unique_id=36975841]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.78, 0.09, -1.35)
+
+[node name="Wheel" parent="WheelFR" unique_id=658169851 instance=ExtResource("3_wheel")]
+
+[node name="WheelRL" type="Node3D" parent="." unique_id=1057332404]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.78, 0.09, 1.3)
+
+[node name="Wheel" parent="WheelRL" unique_id=259984016 instance=ExtResource("3_wheel")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="WheelRR" type="Node3D" parent="." unique_id=215189149]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.78, 0.09, 1.3)
+
+[node name="Wheel" parent="WheelRR" unique_id=2014655122 instance=ExtResource("3_wheel")]
+
+[node name="RearContactL" type="Marker3D" parent="." unique_id=1504897280]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.78, -0.235, 1.3)
+
+[node name="RearContactR" type="Marker3D" parent="." unique_id=2012681074]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.78, -0.235, 1.3)
