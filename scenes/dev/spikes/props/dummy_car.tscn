@@ -1,0 +1,124 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/dev/spikes/props/dummy_car.gd" id="1_car"]
+
+[ext_resource type="Shader" path="res://shaders/cel_lit.gdshader" id="2_cel"]
+
+[ext_resource type="Shader" path="res://shaders/cel_emissive.gdshader" id="3_emi"]
+
+[ext_resource type="Shader" path="res://shaders/glow_billboard.gdshader" id="4_glow"]
+
+[ext_resource type="Shader" path="res://shaders/blob_shadow.gdshader" id="5_blob"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_body"]
+shader = ExtResource("2_cel")
+shader_parameter/tone_light = Color(0.980392, 0.94902, 0.956863, 1)
+shader_parameter/tone_mid = Color(0.898039, 0.74902, 0.815686, 1)
+shader_parameter/tone_shadow = Color(0.619608, 0.388235, 0.588235, 1)
+shader_parameter/rim_strength = 0.35
+shader_parameter/spec_strength = 0.6
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_glass"]
+shader = ExtResource("2_cel")
+shader_parameter/tone_light = Color(0.415686, 0.298039, 0.611765, 1)
+shader_parameter/tone_mid = Color(0.27451, 0.156863, 0.431373, 1)
+shader_parameter/tone_shadow = Color(0.141176, 0.086275, 0.247059, 1)
+shader_parameter/rim_strength = 0.2
+shader_parameter/spec_strength = 0.9
+shader_parameter/spec_threshold = 0.9
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tire"]
+shader = ExtResource("2_cel")
+shader_parameter/tone_light = Color(0.290196, 0.180392, 0.4, 1)
+shader_parameter/tone_mid = Color(0.180392, 0.113725, 0.278431, 1)
+shader_parameter/tone_shadow = Color(0.105882, 0.062745, 0.188235, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_brake"]
+shader = ExtResource("3_emi")
+shader_parameter/color_on = Color(1, 0.309804, 0.431373, 1)
+shader_parameter/color_off = Color(0.360784, 0.121569, 0.2, 1)
+shader_parameter/energy = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_brakeglow"]
+shader = ExtResource("4_glow")
+shader_parameter/glow_color = Color(1, 0.309804, 0.431373, 1)
+shader_parameter/intensity = 0.9
+shader_parameter/core = 0.15
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_blob"]
+shader = ExtResource("5_blob")
+
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+material = SubResource("ShaderMaterial_body")
+size = Vector3(1.8, 0.55, 4.4)
+subdivide_width = 12
+subdivide_height = 4
+subdivide_depth = 28
+
+[sub_resource type="BoxMesh" id="BoxMesh_cabin"]
+material = SubResource("ShaderMaterial_glass")
+size = Vector3(1.5, 0.45, 2)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_wheel"]
+material = SubResource("ShaderMaterial_tire")
+top_radius = 0.33
+bottom_radius = 0.33
+height = 0.26
+radial_segments = 20
+rings = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_brake"]
+material = SubResource("ShaderMaterial_brake")
+size = Vector3(1.5, 0.12, 0.06)
+
+[sub_resource type="QuadMesh" id="QuadMesh_brakeglow"]
+material = SubResource("ShaderMaterial_brakeglow")
+size = Vector2(2.6, 0.9)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_blob"]
+material = SubResource("ShaderMaterial_blob")
+size = Vector2(2.6, 5.2)
+
+[node name="DummyCar" type="Node3D" node_paths=PackedStringArray("brake_light", "brake_glow")]
+script = ExtResource("1_car")
+brake_light = NodePath("BrakeLight")
+brake_glow = NodePath("BrakeGlow")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+mesh = SubResource("BoxMesh_body")
+
+[node name="Cabin" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.25)
+mesh = SubResource("BoxMesh_cabin")
+
+[node name="WheelFL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -0.86, 0.33, -1.4)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="WheelFR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.86, 0.33, -1.4)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="WheelRL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -0.86, 0.33, 1.4)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="WheelRR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.86, 0.33, 1.4)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="BrakeLight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 2.21)
+mesh = SubResource("BoxMesh_brake")
+
+[node name="BrakeGlow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 2.4)
+visible = false
+cast_shadow = 0
+mesh = SubResource("QuadMesh_brakeglow")
+
+[node name="BlobShadow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_blob")

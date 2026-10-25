@@ -1,0 +1,13 @@
+# Godot 4
+.godot/
+/android/
+/build/
+export_credentials.cfg
+# переводы генерируются импортом strings.csv
+localization/*.translation
+# мусор
+__pycache__/
+*.pyc
+*.tmp
+.DS_Store
+Thumbs.db

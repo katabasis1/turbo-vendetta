@@ -1,0 +1,134 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/dev/spikes/spike_hud.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+bg_color = Color(0.106, 0.078, 0.2, 0.88)
+
+[node name="SpikeHud" type="CanvasLayer" node_paths=PackedStringArray("title_label", "stats_label", "variants_label", "variant_buttons", "freeze_button", "menu_button")]
+layer = 100
+script = ExtResource("1_hud")
+title_label = NodePath("Root/Panel/Box/Title")
+stats_label = NodePath("Root/Panel/Box/Stats")
+variants_label = NodePath("Root/Panel/Box/Variants")
+variant_buttons = [NodePath("Root/Buttons/B1"), NodePath("Root/Buttons/B2"), NodePath("Root/Buttons/B3"), NodePath("Root/Buttons/B4"), NodePath("Root/Buttons/B5"), NodePath("Root/Buttons/B6")]
+freeze_button = NodePath("Root/Buttons/Freeze")
+menu_button = NodePath("Root/Buttons/Menu")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Root"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 560.0
+offset_bottom = 300.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Box" type="VBoxContainer" parent="Root/Panel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Root/Panel/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.957, 0.675, 0.353, 1)
+theme_override_font_sizes/font_size = 22
+text = "Спайк"
+
+[node name="Stats" type="Label" parent="Root/Panel/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.988, 0.969, 0.976, 1)
+theme_override_font_sizes/font_size = 18
+text = "…"
+
+[node name="Variants" type="Label" parent="Root/Panel/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.737, 0.643, 0.82, 1)
+theme_override_font_sizes/font_size = 18
+text = "…"
+
+[node name="Buttons" type="GridContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -436.0
+offset_top = -236.0
+offset_right = -48.0
+offset_bottom = -48.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 4
+
+[node name="B1" type="Button" parent="Root/Buttons"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "1"
+
+[node name="B2" type="Button" parent="Root/Buttons"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "2"
+
+[node name="B3" type="Button" parent="Root/Buttons"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "3"
+
+[node name="B4" type="Button" parent="Root/Buttons"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "4"
+
+[node name="B5" type="Button" parent="Root/Buttons"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "5"
+
+[node name="B6" type="Button" parent="Root/Buttons"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "6"
+
+[node name="Freeze" type="Button" parent="Root/Buttons"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "F"
+
+[node name="Menu" type="Button" parent="Root/Buttons"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Меню"

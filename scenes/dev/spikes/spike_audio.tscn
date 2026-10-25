@@ -1,0 +1,92 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/dev/spikes/spike_audio.gd" id="1_audio"]
+
+[ext_resource type="PackedScene" path="res://scenes/dev/spikes/spike_hud.tscn" id="2_hud"]
+
+[ext_resource type="AudioStream" path="res://scenes/dev/spikes/audio/engine_r070.ogg" id="3_r070"]
+
+[ext_resource type="AudioStream" path="res://scenes/dev/spikes/audio/engine_r100.ogg" id="4_r100"]
+
+[ext_resource type="AudioStream" path="res://scenes/dev/spikes/audio/engine_r180.ogg" id="5_r180"]
+
+[node name="SpikeAudio" type="Control" node_paths=PackedStringArray("hud", "engine_low", "engine_base", "engine_high", "rpm_slider", "rpm_label", "info_label")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_audio")
+hud = NodePath("Hud")
+engine_low = NodePath("EngineLow")
+engine_base = NodePath("EngineBase")
+engine_high = NodePath("EngineHigh")
+rpm_slider = NodePath("Center/Box/RpmSlider")
+rpm_label = NodePath("Center/Box/RpmLabel")
+info_label = NodePath("Center/Box/Info")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.075, 0.047, 0.153, 1)
+
+[node name="EngineLow" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_r070")
+bus = &"Engines"
+
+[node name="EngineBase" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_r100")
+bus = &"Engines"
+
+[node name="EngineHigh" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_r180")
+bus = &"Engines"
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="Center/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.957, 0.675, 0.353, 1)
+theme_override_font_sizes/font_size = 34
+text = "Звук мотора и вибрация · S-07 S-11"
+horizontal_alignment = 1
+
+[node name="RpmLabel" type="Label" parent="Center/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "…"
+horizontal_alignment = 1
+
+[node name="RpmSlider" type="HSlider" parent="Center/Box"]
+custom_minimum_size = Vector2(900, 72)
+layout_mode = 2
+min_value = 0.7
+max_value = 1.8
+step = 0.01
+value = 1.0
+
+[node name="Info" type="Label" parent="Center/Box"]
+custom_minimum_size = Vector2(900, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.737, 0.643, 0.82, 1)
+theme_override_font_sizes/font_size = 18
+text = "…"
+autowrap_mode = 3
+
+[node name="Hud" parent="." instance=ExtResource("2_hud")]

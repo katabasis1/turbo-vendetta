@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Иконка-заглушка 1.1: закатное небо (STYLE_GUIDE §2), солнце без полос, эстакада, полоса героя. Финальная иконка — этап 9. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#24163F"/>
+      <stop offset="0.35" stop-color="#46286E"/>
+      <stop offset="0.6" stop-color="#9D4488"/>
+      <stop offset="0.8" stop-color="#EB7B93"/>
+      <stop offset="1" stop-color="#F6B26B"/>
+    </linearGradient>
+    <clipPath id="r"><rect x="4" y="4" width="120" height="120" rx="22"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect x="0" y="0" width="128" height="128" fill="url(#sky)"/>
+    <circle cx="64" cy="82" r="26" fill="#FFF1D6"/>
+    <path d="M0 92 L128 84 L128 128 L0 128 Z" fill="#3A2260"/>
+    <path d="M0 100 L128 92 L128 98 L0 106 Z" fill="#A390C0"/>
+    <path d="M30 128 L58 104 L70 104 L54 128 Z" fill="#E8364F"/>
+  </g>
+</svg>
