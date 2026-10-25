@@ -382,13 +382,20 @@ Godot вызывает `_physics_process` по возрастанию `process_p
 Car01Model         Node3D        car_model.gd (CarModel)
 ├─ BodyPivot       Node3D        крен и клевок кузова
 │  └─ Body         (экземпляр assets/models/cars/car_01/car_01.glb)
+│     ├─ body, tail, head          MeshInstance3D (узлы .glb: кузов-атлас, стоп-сигналы, фары)
+│     └─ body_outline              MeshInstance3D (оболочка контура, S-19)
+│  └─ BrakeGlow    MeshInstance3D  ореол стоп-сигналов (QuadMesh, glow_billboard), виден при торможении
 ├─ WheelFL … WheelRR   Node3D    пивоты на месте ступиц (те же x/z, что у лучей, y = 0,09) → экземпляр wheel_a.glb
+│                                 (узлы wheel + wheel_outline); у левых колёс экземпляр повёрнут на 180° вокруг Y
 ├─ TailLightL, TailLightR   Marker3D   точки шлейфов (у каждой машины своя форма огней — STYLE_GUIDE §5)
 ├─ RearContactL, RearContactR   Marker3D  точки дыма и следов (y = −0,24)
-├─ Nameplate       Marker3D      над крышей, для плашки БОСС/ПРИЗРАК (2.x)
-└─ (BrakeLights)   MeshInstance3D  отдельный меш стоп-сигналов, если модель так собрана
+└─ Nameplate       Marker3D      над крышей, для плашки БОСС/ПРИЗРАК (2.x)
 ```
-`CarModel`: `@export var body_pivot`, `wheel_pivots: Array[Node3D]` (FL, FR, RL, RR), `tail_lights: Array[Marker3D]`, `rear_contacts: Array[Marker3D]`, `nameplate: Marker3D`, `brake_lights: Array[MeshInstance3D]`; методы `set_brake(on: bool)`, `set_flash(amount: float)`. Как именно включать стоп-сигнал (instance uniform или замена материала) — решает спайк S-06.
+`CarModel`: `@export var body_pivot`, `wheel_pivots: Array[Node3D]` (FL, FR, RL, RR), `tail_lights: Array[Marker3D]`, `rear_contacts: Array[Marker3D]`, `nameplate: Marker3D`, `brake_lights: Array[GeometryInstance3D]`, `brake_glow: GeometryInstance3D`; методы `set_brake(on: bool)`, `set_flash(amount: float)`. Стоп-сигнал — instance uniform `emission_on` у `cel_emissive`, материал общий (S-06).
+
+**Материалы (S-19, 2026-10-25).** У узлов `.glb` материалы MeshForge (`mf_atlas`, `mf_emissive`, `mf_outline`) — только для превью в редакторе; `mf_outline` невидим (alpha scissor, альфа 0). В игре `CarModel._ready()` ставит `material_override` по своим спискам: `paint_meshes` ← `paint_material` (cel_lit, тона краски), `wheel_meshes` ← `wheel_material`, `head_lights` ← `head_material`, `brake_lights` ← `brake_material` (cel_emissive), `outline_meshes` ← `outline_material` (`cel_outline`). Списки — `NodePath` во вложенные узлы экземпляров `.glb` (`BodyPivot/Body/body`, `WheelFL/Wheel/wheel_outline`…), без «редактируемых потомков» и без переопределений внутри экземпляра: так пересохранение в редакторе не плодит правок. Материалы — `sub_resource` сцены модели (у каждой машины своя краска).
+
+**Контур (S-19).** Оболочка — отдельный узел `<имя>_outline` в `.glb`: те же треугольники, вершины сварены по позиции, нормали сглажены (`tools/meshforge/mf/outline.py`). Шейдер `shaders/cel_outline.gdshader`: `cull_front`, вершина сдвигается в экранной плоскости по проекции нормали на `width_px` (при 720p; масштаб по высоте кадра), глубина не сдвигается; дальше `full_width_dist` толщина падает до `min_width_scale`; туман как у `cel_lit`. Оболочка — второй проход: +1 вызов отрисовки на меш, треугольники в бюджет модели не входят (паспорт MeshForge пишет их отдельно). Офлайн-двойник — `mf/preview.py` `ink()`.
 
 ## 9. Сущность «Трасса» — `scenes/tracks/track_XX/track_XX.tscn`
 ### 9.1 Дерево

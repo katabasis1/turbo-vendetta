@@ -463,4 +463,5 @@ def build() -> Model:
         meta={"kind": "car", "budget_tris": 4000, "wheel": "wheel_a", "dims": (4.40, 1.92, 1.17),
               "ground_y": Y0, "axles": AXLES, "track_x": TRACK_X, "x_inner": X_INNER},
         closed=[],
+        outline=["body"],
     )

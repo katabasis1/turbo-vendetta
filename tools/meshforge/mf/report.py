@@ -86,6 +86,9 @@ def build_report(model, extra_tris: int = 0, hull: Mesh | None = None) -> dict:
         rep["hull_open_edges"], rep["hull_fins"] = open_e, fins
         if open_e or fins:
             errors.append(f"корпус не замкнут: открытых рёбер {open_e}, рёбер на > 2 гранях {fins}")
+    if model.outline:   # оболочка контура (S-19): отдельный узел, в бюджет модели не входит — это второй проход
+        from .outline import hull as outline_hull
+        rep["outline"] = {n.name: outline_hull(n.surfaces())[1] for n in model.nodes if n.name in model.outline}
     for n in model.nodes:
         if n.name in model.closed:
             open_e, fins = edge_report(n)
@@ -107,6 +110,9 @@ def format_report(rep: dict) -> str:
     if "length" in rep:
         lines.append(f"длина {rep['length']} · ширина кузова {rep['width_body']} (с зеркалами {rep['width_mirrors']}) · "
                      f"высота {rep['height']} · просвет {rep['ground_clearance']} · база {rep['wheelbase']}")
+    for k, v in rep.get("outline", {}).items():
+        lines.append(f"контур (узел {k}_outline, второй проход cel_outline, вне бюджета): {v['tris']} треугольников, "
+                     f"{v['verts']} вершин (сварены, сглаженные нормали)" + (f", запасных нормалей {v['fallback']}" if v['fallback'] else ""))
     if "hull_open_edges" in rep:
         lines.append(f"корпус: открытых рёбер {rep['hull_open_edges']}, «плавников» {rep['hull_fins']}")
     for e in rep["errors"]:

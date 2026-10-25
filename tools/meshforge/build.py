@@ -26,7 +26,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 
-from mf import atlas, gltf, palette, report  # noqa: E402
+from mf import atlas, gltf, outline, palette, report  # noqa: E402
 
 MODELS = ["wheel_a", "car_01"]          # порядок сборки: колёса раньше машин
 ATLAS = "assets/textures/palette_atlas.png"
@@ -48,7 +48,16 @@ def glb_bytes(model) -> bytes:
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         p = Path(td) / "m.glb"
-        return gltf.write_glb(p, [(n.name, n.surfaces()) for n in model.nodes], rel_uri(model.out), GENERATOR)
+        return gltf.write_glb(p, glb_nodes(model), rel_uri(model.out), GENERATOR)
+
+
+def glb_nodes(model) -> list:
+    """Узлы .glb: меши модели по порядку, затем оболочки контура `<имя>_outline` (S-19)."""
+    nodes = [(n.name, n.surfaces()) for n in model.nodes]
+    for n in model.nodes:
+        if n.name in model.outline:
+            nodes.append((f"{n.name}_outline", outline.hull(n.surfaces())[0]))
+    return nodes
 
 
 def atlas_bytes() -> bytes:
@@ -78,12 +87,25 @@ def previews(name: str, model, wheel_cache: dict) -> None:
         tones = pv.car_tones("pearl_light", "pearl_mid", "pearl_shadow")
         body_p = {"atlas": pv.mat_params(tones, rim=0.35, spec=0.6), "emissive": pv.EMISSIVE}
         wheel_p = {"atlas": pv.mat_params(tones)}
-        items = [(n.surfaces(), pv.translate(), body_p) for n in model.nodes]
         wmodel = wheel_cache[model.meta["wheel"]].build()
         ws = wmodel.nodes[0].surfaces()
-        for k, (x, y, z) in model.anchors.items():
-            if k.startswith("wheel_"):
-                items.append((ws, pv.translate(x, y, z, 180 if x < 0 else 0), wheel_p))
+        hulls = [outline.hull(n.surfaces())[0] for n in model.nodes if n.name in model.outline]
+        w_hull = outline.hull(ws)[0] if wmodel.outline else None
+
+        def car_items(ink_px: float) -> list:
+            """Модель + колёса по якорям + оболочки контура (ink_px = 0 — без контура)."""
+            items = [(n.surfaces(), pv.translate(), body_p) for n in model.nodes]
+            if ink_px:
+                items += [(h, pv.translate(), {"outline": pv.ink(ink_px)}) for h in hulls]
+            for k, (x, y, z) in model.anchors.items():
+                if k.startswith("wheel_"):
+                    M = pv.translate(x, y, z, 180 if x < 0 else 0)
+                    items.append((ws, M, wheel_p))
+                    if ink_px and w_hull is not None:
+                        items.append((w_hull, M, {"outline": pv.ink(ink_px)}))
+            return items
+
+        items = car_items(2.0)
         g = model.meta["ground_y"]
         cy = g + 0.6
         shots = [
@@ -94,7 +116,7 @@ def previews(name: str, model, wheel_cache: dict) -> None:
         ]
         tiles = []
         for title, kw in shots:
-            im = pv.render(items, size=(640, 400), ss=2, ground_y=g, shadow_box=(1.1, 2.5), outline=2.0, **kw)
+            im = pv.render(items, size=(640, 400), ss=2, ground_y=g, shadow_box=(1.1, 2.5), **kw)
             tiles.append(pv.label(im, title))
         sheet = Image.new("RGB", (1280, 800))
         for i, t in enumerate(tiles):
@@ -115,7 +137,7 @@ def previews(name: str, model, wheel_cache: dict) -> None:
             if fill:
                 im = Image.composite(Image.new("RGB", m.size, ink), Image.new("RGB", m.size, bg), m)
             else:
-                im = pv.render(items, size=(640, 400), ss=1, ground_y=g, shadow_box=(1.1, 2.5), outline=1.5, **kw)
+                im = pv.render(car_items(1.5), size=(640, 400), ss=1, ground_y=g, shadow_box=(1.1, 2.5), **kw)
             crop = im.crop(bb)
             k = h_px / crop.height
             small = crop.resize((max(1, round(crop.width * k)), h_px), Image.BOX)
@@ -134,9 +156,11 @@ def previews(name: str, model, wheel_cache: dict) -> None:
     elif model.meta.get("kind") == "wheel":
         prm = {"atlas": pv.mat_params(pv.car_tones("pearl_light", "pearl_mid", "pearl_shadow"))}
         items = [(n.surfaces(), pv.translate(), prm) for n in model.nodes]
+        items += [(outline.hull(n.surfaces())[0], pv.translate(), {"outline": pv.ink(2.0)})
+                  for n in model.nodes if n.name in model.outline]
         tiles = []
         for title, eye in (("снаружи (+X)", (1.6, 0.25, 0.9)), ("изнутри (−X)", (-1.6, 0.25, -0.9))):
-            im = pv.render(items, eye=eye, target=(0, 0, 0), fov_deg=30, size=(400, 400), ss=2, outline=2.0)
+            im = pv.render(items, eye=eye, target=(0, 0, 0), fov_deg=30, size=(400, 400), ss=2)
             tiles.append(pv.label(im, title))
         sheet = Image.new("RGB", (800, 400))
         for i, t in enumerate(tiles):

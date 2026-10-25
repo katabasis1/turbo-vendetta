@@ -50,6 +50,13 @@ def mat_params(tones: dict | None = None, rim=0.0, spec=0.0) -> dict:
 EMISSIVE = {"emissive": True}
 
 
+def ink(px: float = 2.0) -> dict:
+    """Параметры оболочки контура (узел `<имя>_outline`, материал 'outline'): та же схема, что
+    shaders/cel_outline.gdshader — вершина сдвигается в экранной плоскости по проекции сглаженной нормали
+    на px пикселей итогового кадра, рисуются только задние грани, глубина не сдвигается, цвет `deepest`."""
+    return {"ink": True, "px": px}
+
+
 def _look_at(eye, target, up=(0, 1, 0)):
     eye, target, up = map(lambda v: np.array(v, dtype=float), (eye, target, up))
     f = target - eye; f /= np.linalg.norm(f)
@@ -71,7 +78,8 @@ def render(items, eye, target, fov_deg=40.0, size=(960, 600), ss=2, ground_y=Non
     """items: [(surfaces, M(4×4), {'atlas': params, 'emissive': EMISSIVE})]. → PIL.Image RGB.
     ortho_height — ортографическая камера (высота кадра в метрах) для вида сбоку/сзади/сверху.
     outline — толщина тушевого контура в пикселях итогового кадра (STYLE_GUIDE v1.1 §3, D-018): линия по краю
-    силуэта и по разрывам глубины (то, что даст вывернутая оболочка в игре), цвет `deepest`. 0 — без контура.
+    силуэта и по разрывам глубины (приближение постобработкой), цвет `deepest`. 0 — без контура.
+    Точнее — узлы `<имя>_outline` с параметрами ink(px): вывернутая оболочка, как в игре (cel_outline).
     sun_dir — направление на солнце вместо глобального SUN_DIR (студийный свет для сравнения с референсом)."""
     global _ATLAS
     if _ATLAS is None:
@@ -101,13 +109,29 @@ def render(items, eye, target, fov_deg=40.0, size=(960, 600), ss=2, ground_y=Non
                 hh = ortho_height / 2
                 sx = (xc / (hh * aspect) * 0.5 + 0.5) * W
                 sy = (0.5 - yc / hh * 0.5) * H
+            is_ink = bool(params[mat].get("ink"))
+            if is_ink:                   # оболочка контура: сдвиг по экранной проекции нормали (cel_outline)
+                rel2 = P + N * 0.01 - eye
+                x2c, y2c, z2c = rel2 @ R, rel2 @ U, rel2 @ F
+                if ortho_height is None:
+                    sx2 = (x2c / (z2c * tanf * aspect) * 0.5 + 0.5) * W
+                    sy2 = (0.5 - y2c / (z2c * tanf) * 0.5) * H
+                else:
+                    sx2 = (x2c / (hh * aspect) * 0.5 + 0.5) * W
+                    sy2 = (0.5 - y2c / hh * 0.5) * H
+                ddx, ddy = sx2 - sx, sy2 - sy
+                dl = np.hypot(ddx, ddy)
+                dl = np.where(dl < 1e-9, np.inf, dl)
+                wpx = params[mat]["px"] * ss
+                sx, sy = sx + ddx / dl * wpx, sy + ddy / dl * wpx
             idx = s["indices"].reshape(-1, 3)
             for a, b, c in idx:
                 if min(zc[a], zc[b], zc[c]) <= 0.05:
                     continue
                 x0, y0, x1, y1, x2, y2 = sx[a], sy[a], sx[b], sy[b], sx[c], sy[c]
                 area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0)
-                if area >= 0:            # экран y вниз: лицевая (против часовой в мире) даёт area < 0
+                # экран y вниз: лицевая (против часовой в мире) даёт area < 0; оболочка — только задние грани
+                if (area <= 0) if is_ink else (area >= 0):
                     continue
                 minx, maxx = int(max(0, math.floor(min(x0, x1, x2)))), int(min(W - 1, math.ceil(max(x0, x1, x2))))
                 miny, maxy = int(max(0, math.floor(min(y0, y1, y2)))), int(min(H - 1, math.ceil(max(y0, y1, y2))))
@@ -188,9 +212,13 @@ def render(items, eye, target, fov_deg=40.0, size=(960, 600), ss=2, ground_y=Non
         t = np.clip((x - e0) / (e1 - e0), 0, 1)
         return t * t * (3 - 2 * t)
 
+    ink_col = lin([c / 255 for c in palette.hex_rgb(palette.resolve("deepest"))])
     for mid, prm in enumerate(mats):
         m = mbuf == mid
         if not m.any():
+            continue
+        if prm.get("ink"):
+            img[m] = ink_col
             continue
         if prm.get("emissive"):
             img[m] = albedo[m] * prm.get("energy", 1.0)

@@ -4,7 +4,8 @@
 атрибуты POSITION (с min/max), NORMAL, TEXCOORD_0; индексы uint16/uint32; материалы без PBR-металла
 (metallic 0, roughness 1). Текстура — внешний файл атласа по относительному URI (в .glb не встраивается:
 иначе импорт Godot извлёк бы копию PNG рядом с моделью). В игре материалы заменяются нашими ShaderMaterial
-(cel_lit / cel_emissive) в сцене модели, материалы .glb нужны для превью в редакторе.
+(cel_lit / cel_emissive / cel_outline) в сцене модели, материалы .glb нужны для превью в редакторе.
+Узлы `<имя>_outline` — оболочка контура со сглаженными нормалями (mf/outline.py, S-19).
 """
 from __future__ import annotations
 
@@ -24,6 +25,8 @@ MATERIALS = {
     # имя материала в .glb → как выглядит в превью редактора
     "atlas": {"name": "mf_atlas", "emissive": False},
     "emissive": {"name": "mf_emissive", "emissive": True},
+    # оболочка контура (mf/outline.py): в превью редактора невидима (MASK, альфа 0), в игре — cel_outline
+    "outline": {"name": "mf_outline", "emissive": False, "hidden": True},
 }
 
 
@@ -47,6 +50,10 @@ def write_glb(path: Path, nodes: list[tuple[str, dict]], image_uri: str, generat
         d = MATERIALS[m]
         mj = {"name": d["name"], "pbrMetallicRoughness": {"baseColorTexture": {"index": 0},
                                                            "metallicFactor": 0.0, "roughnessFactor": 1.0}}
+        if d.get("hidden"):
+            mj = {"name": d["name"], "pbrMetallicRoughness": {"baseColorFactor": [0.106, 0.063, 0.188, 0.0],
+                                                               "metallicFactor": 0.0, "roughnessFactor": 1.0},
+                  "alphaMode": "MASK", "alphaCutoff": 0.5}
         if d["emissive"]:
             mj["emissiveTexture"] = {"index": 0}
             mj["emissiveFactor"] = [1.0, 1.0, 1.0]

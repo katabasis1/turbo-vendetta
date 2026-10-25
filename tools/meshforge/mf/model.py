@@ -14,3 +14,4 @@ class Model:
     anchors: dict = field(default_factory=dict)   # имя → (x, y, z): огни, колёса, контакты
     meta: dict = field(default_factory=dict)      # бюджет, размеры для проверок
     closed: list[str] = field(default_factory=list)  # узлы, которые должны быть замкнутыми (без дыр)
+    outline: list[str] = field(default_factory=list)  # узлы с контуром: + узел `<имя>_outline` в .glb (mf/outline.py)

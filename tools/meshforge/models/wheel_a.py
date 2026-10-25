@@ -88,4 +88,5 @@ def build() -> Model:
         name="wheel_a", out="assets/models/wheels/wheel_a.glb", nodes=[m],
         meta={"budget_tris": 400, "radius": R, "width": W, "kind": "wheel"},
         closed=[],          # шина + отдельные спицы-призмы: замкнуты по отдельности, общий меш — нет
+        outline=["wheel"],
     )

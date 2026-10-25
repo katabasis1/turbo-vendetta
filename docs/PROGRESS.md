@@ -3,17 +3,29 @@
 ## ТЕКУЩАЯ ПОЗИЦИЯ
 - Проект: «Турбовендетта: гонки на выбывание» / "Turbo Vendetta: Knockout Racing", slug `turbo-vendetta` (D-007 принято).
 - Версия: 0.0.0 (каркас готов, v0.0.1 не выпущена)
-- Этап: 1 «Первый заезд» (v0.0.1). Этап 0 закрыт полностью.
-- Подэтап: **1.2 MeshForge — модель car_01 v2 «Сэнко» собрана, ждёт утверждения пользователем** (D-019 п. 5): `assets/models/cars/car_01/car_01.glb` + `assets/models/wheels/wheel_a.glb` v2 (5 спиц), 3946 треуг. из 4000. Скрипты — `tools/meshforge/models/car_01.py`, `wheel_a.py`, детали `mf/parts.py`; сравнение с ref — `python3 tools/meshforge/compare.py car_01` → `docs/art/cars/car_01/car_01_model_vs_ref.png`. Состояние и известные расхождения — `docs/art/cars/car_01/BRIEF.md` §9. Оси колёс общие (D-020).
+- Этап: 1 «Первый заезд» (v0.0.1). Этап 0 закрыт полностью; 1.1 (со стороны агента) и 1.2 закрыты.
+- Подэтап: **1.3 машина-композиция** (S-19 шейдер ✅ без движка). Модель car_01 v2 «Сэнко» + `wheel_a` v2 утверждены 22:25 (1.2 ✅). Контур: `shaders/cel_outline.gdshader` + узлы `body_outline`/`wheel_outline` в .glb (ARCHITECTURE §8.5). Сейчас: `scenes/car/car_model.gd` + `scenes/car/models/car_01_model.tscn` (генератор `tools/agent/gen_car_scenes.py`).
 - Источник истины: GitHub `https://github.com/katabasis1/turbo-vendetta`, ветка `main` (D-017). Восстановление: `files__upload_from_url` (zip с codeload) → `restore_github.py --zip …`. Pod — пакеты изменений `builds/changes/`, плоские копии документов, `restore_github.py`.
-- В GitHub: коммит `e9c8855` (пакет 2131). Не залиты — пакеты после него (последний накопительный `turbo-vendetta_changes_latest.zip` в Pod).
-- Следующий шаг агента: ответ пользователя по модели → правки (нос, выступ арок) или закрыть 1.2 в PLAN; затем сглаженные нормали для контура в `mf/gltf.py` + `shaders/cel_outline.gdshader` (S-19) → 1.3 (`car_01_model.tscn`, физика).
+- В GitHub: коммит `66d252e` (пакет 2212). Не залиты — пакеты после него (последний накопительный `turbo-vendetta_changes_latest.zip` в Pod).
+- Следующий шаг агента: `car_model.gd` (материалы через material_override, ARCHITECTURE §8.5) → `gen_car_scenes.py` → `car_01_model.tscn` → превью-сцена `scenes/dev/dev_car_model.tscn` для пользователя; затем `CarSpec`, компоненты машины, `car.tscn`, `spike_physics`.
 - Следующий шаг пользователя: залить пакет; прислать «Вывод» и пп. 2–5 `docs/SPIKE_CHECKLIST.md`.
 - На будущее (просьба пользователя): попробовать Blender в браузере `https://developer.puter.com/labs/blender-web/` — из песочницы недоступен (нет сети, нет окна); D-xxx после пробы.
 
 ---
 
 ## Лог (новые записи — сверху)
+
+### [2026-10-25 22:46 МСК] v0.0.0 — S-19 (шейдер) — контур: оболочка + cel_outline
+- Сделано: `tools/meshforge/mf/outline.py` — оболочка контура (вершины сварены, сглаженные нормали с весом по углу); MeshForge пишет узлы `body_outline` / `wheel_outline` (материал `mf_outline`, в редакторе невидим); паспорт показывает их отдельно (вне бюджета). `shaders/cel_outline.gdshader` (+ `.uid`): `cull_front`, сдвиг в экранной плоскости на `width_px` при 720p, спад толщины с расстояния, туман. Превью MeshForge рисует контур той же оболочкой (`mf/preview.py` `ink()`), картинки `docs/art/models/car_01_*.png`, `wheel_a_views.png` пересобраны.
+- Факты: кузов 2394 тр./1624 верш., колесо 383/212, запасных нормалей 0; разрывов контура на превью нет. В Godot не проверено.
+- Изменённые файлы: `tools/meshforge/{build.py, mf/outline.py, mf/gltf.py, mf/model.py, mf/preview.py, mf/report.py, models/car_01.py, models/wheel_a.py}`, `assets/models/cars/car_01/car_01.glb`, `assets/models/wheels/wheel_a.glb`, `shaders/cel_outline.gdshader{,.uid}`, `docs/ARCHITECTURE.md` §8.5, `docs/SPIKES.md` S-19, превью и паспорта в `docs/art/models/`.
+- Следующий шаг: `scenes/car/car_model.gd` + `car_01_model.tscn` (генератор), dev-сцена просмотра модели.
+
+### [2026-10-25 22:26 МСК] v0.0.0 — 1.2 ✅ — модель car_01 v2 утверждена
+- Сделано: пользователь утвердил модель «утверждаю, продолжай» (22:25). PLAN 1.2 отмечен, BRIEF §9 — «УТВЕРЖДЕНО». Расхождения с ref (нос, выступ арок, без заклёпок) приняты.
+- Факты: GitHub на `66d252e` (пакет 2212 залит); `restore ok` из zip, 0 конфликтов.
+- Изменённые файлы: `docs/PLAN.md`, `docs/art/cars/car_01/BRIEF.md`, `docs/PROGRESS.md`.
+- Следующий шаг: S-19 — сглаженные нормали для контура (`mf/gltf.py`) + `shaders/cel_outline.gdshader`; затем 1.3.
 
 ### [2026-10-25 22:12 МСК] v0.0.0 — 1.2 — модель car_01 v2 «Сэнко» собрана, показана пользователю
 - Итог: `car_01.glb` + `wheel_a.glb` v2 записаны, паспорт проходит (3946 / 4000). Состояние, черты, известные расхождения — `docs/art/cars/car_01/BRIEF.md` §9.
