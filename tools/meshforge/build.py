@@ -94,7 +94,7 @@ def previews(name: str, model, wheel_cache: dict) -> None:
         ]
         tiles = []
         for title, kw in shots:
-            im = pv.render(items, size=(640, 400), ss=2, ground_y=g, shadow_box=(1.1, 2.5), **kw)
+            im = pv.render(items, size=(640, 400), ss=2, ground_y=g, shadow_box=(1.1, 2.5), outline=2.0, **kw)
             tiles.append(pv.label(im, title))
         sheet = Image.new("RGB", (1280, 800))
         for i, t in enumerate(tiles):
@@ -115,7 +115,7 @@ def previews(name: str, model, wheel_cache: dict) -> None:
             if fill:
                 im = Image.composite(Image.new("RGB", m.size, ink), Image.new("RGB", m.size, bg), m)
             else:
-                im = pv.render(items, size=(640, 400), ss=1, ground_y=g, shadow_box=(1.1, 2.5), **kw)
+                im = pv.render(items, size=(640, 400), ss=1, ground_y=g, shadow_box=(1.1, 2.5), outline=1.5, **kw)
             crop = im.crop(bb)
             k = h_px / crop.height
             small = crop.resize((max(1, round(crop.width * k)), h_px), Image.BOX)
@@ -136,7 +136,7 @@ def previews(name: str, model, wheel_cache: dict) -> None:
         items = [(n.surfaces(), pv.translate(), prm) for n in model.nodes]
         tiles = []
         for title, eye in (("снаружи (+X)", (1.6, 0.25, 0.9)), ("изнутри (−X)", (-1.6, 0.25, -0.9))):
-            im = pv.render(items, eye=eye, target=(0, 0, 0), fov_deg=30, size=(400, 400), ss=2)
+            im = pv.render(items, eye=eye, target=(0, 0, 0), fov_deg=30, size=(400, 400), ss=2, outline=2.0)
             tiles.append(pv.label(im, title))
         sheet = Image.new("RGB", (800, 400))
         for i, t in enumerate(tiles):

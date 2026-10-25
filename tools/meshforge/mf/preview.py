@@ -67,9 +67,12 @@ _ATLAS = None
 
 
 def render(items, eye, target, fov_deg=40.0, size=(960, 600), ss=2, ground_y=None, shadow_box=None,
-           ortho_height=None, background=True):
+           ortho_height=None, background=True, outline=0.0, sun_dir=None):
     """items: [(surfaces, M(4×4), {'atlas': params, 'emissive': EMISSIVE})]. → PIL.Image RGB.
-    ortho_height — ортографическая камера (высота кадра в метрах) для вида сбоку/сзади/сверху."""
+    ortho_height — ортографическая камера (высота кадра в метрах) для вида сбоку/сзади/сверху.
+    outline — толщина тушевого контура в пикселях итогового кадра (STYLE_GUIDE v1.1 §3, D-018): линия по краю
+    силуэта и по разрывам глубины (то, что даст вывернутая оболочка в игре), цвет `deepest`. 0 — без контура.
+    sun_dir — направление на солнце вместо глобального SUN_DIR (студийный свет для сравнения с референсом)."""
     global _ATLAS
     if _ATLAS is None:
         _ATLAS = _atlas_lin()
@@ -172,7 +175,8 @@ def render(items, eye, target, fov_deg=40.0, size=(960, 600), ss=2, ground_y=Non
             g = hit & np.isfinite(t)
             img[g] = gcol[g]
     # ---------------- затенение (как cel_lit)
-    l = SUN_DIR / np.linalg.norm(SUN_DIR)
+    sd = SUN_DIR if sun_dir is None else np.asarray(sun_dir, dtype=float)
+    l = sd / np.linalg.norm(sd)
     sun, tint, rimc = lin(SUN_COLOR), lin(SHADOW_TINT), lin(RIM_COLOR)
     tex_xy = np.clip((uvbuf * atlas.SIZE).astype(int), 0, atlas.SIZE - 1)
     albedo = _ATLAS[tex_xy[..., 1], tex_xy[..., 0]]
@@ -206,8 +210,37 @@ def render(items, eye, target, fov_deg=40.0, size=(960, 600), ss=2, ground_y=Non
         spec = np.sum(n[m] * hv, axis=1)
         c = c + (sstep(0.925, 0.935, spec) * prm["spec"])[:, None]
         img[m] = c
+    if outline > 0:
+        img = _ink(img, zbuf, ortho_height is not None, outline * ss)
     out = Image.fromarray(srgb_img(img), "RGB")
     return out.resize(size, Image.LANCZOS) if ss > 1 else out
+
+
+def _ink(img, zbuf, ortho, px):
+    """Контур: край покрытия + разрыв глубины (относительный в перспективе, абсолютный в орто), утолщение до px."""
+    cov = np.isfinite(zbuf)
+    z = np.where(cov, zbuf, 1e6)
+    edge = np.zeros(cov.shape, dtype=bool)
+    for dy, dx in ((0, 1), (1, 0), (1, 1), (1, -1)):
+        a = z
+        b = np.roll(np.roll(z, dy, 0), dx, 1)
+        ca, cb = cov, np.roll(np.roll(cov, dy, 0), dx, 1)
+        near = np.minimum(a, b)
+        jump = np.abs(a - b) > (0.12 if ortho else 0.035 * near)
+        e = (ca != cb) | (ca & cb & jump)
+        # линию рисуем на ближней стороне разрыва (как оболочка вокруг ближнего тела)
+        edge |= e & (a <= b)
+        edge |= np.roll(np.roll(e & (b < a), -dy, 0), -dx, 1)
+    r = max(1, int(round(px / 2)))
+    thick = edge.copy()
+    yy, xx = np.mgrid[-r:r + 1, -r:r + 1]
+    for dy, dx in zip(yy.ravel(), xx.ravel()):
+        if dy * dy + dx * dx <= r * r and (dy or dx):
+            thick |= np.roll(np.roll(edge, dy, 0), dx, 1)
+    ink = lin([c / 255 for c in palette.hex_rgb(palette.resolve("deepest"))])
+    img = img.copy()
+    img[thick] = ink
+    return img
 
 
 def silhouette(img_rgb: Image.Image, target_h: int, bg_ref: Image.Image) -> Image.Image:

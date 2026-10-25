@@ -35,7 +35,8 @@ ALL: dict[str, str] = {**SKY, **WORLD, **CARS, **FX, **UI}
 ALIASES = {
     "tire": "city_near",          # резина: самый тёмный «живой» лиловый, не чёрный
     "rim": "concrete_shadow",     # тёмный диск
-    "hub": "concrete_mid",        # ступица / центр диска
+    "hub": "concrete_mid",        # ступица / спицы диска
+    "rim_lip": "concrete_light",  # полированная полка диска (wheel_a v2, ref_04) — светлый лиловый, не серый
     "trim": "glass",              # чёрная отделка: решётка, нижняя губа бампера, рамки — цвет стекла
     "underbody": "deepest",       # днище, арки изнутри
     "sparks": "window_warm", "smoke_shadow": "concrete_light", "score": "flash_edge",
